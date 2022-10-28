@@ -1,7 +1,7 @@
 {
-  "name": "LagEradicator",
+  "name": "GriefLess",
   "author": "Recessive",
-  "main": "main.EradicatorMain",
-  "description": "A plugin for helping reduce lag",
+  "main": "main.GrieflessMain",
+  "description": "A plugin for helping combat griefers",
   "version": 0.1
 }

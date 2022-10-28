@@ -1,9 +1,5 @@
-### Lag eradicator
+### GriefLess
 
-Helps reduce lag on your server. At the moment this plugin features the following:
+Helps combat griefers on your server. At the moment prevents players from joining from dodgy ips
 
-
- - Mono-spam prevention. Monos no longer spawn and instead are just added to 
-   a simple counter that generates resources for that team every 10 seconds. The limit on the monos is identical to
-   the normal limit placed on them when creating them in game (with the exception of the Crux team, Crux does not get
-   infinite monos)
+Do not use or copy without permission from Recessive
