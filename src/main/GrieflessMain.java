@@ -39,7 +39,7 @@ public class GrieflessMain extends Plugin {
         prefs = Preferences.userRoot().node(this.getClass().getName());
         hourlyQueries = prefs.getInt("ipQueries", 0);
 
-        Events.on(EventType.Trigger.class, event ->{
+        Events.run(EventType.Trigger.update, () ->{
             realTime = System.currentTimeMillis() - startTime;
             seconds = (int) (realTime / 1000);
 

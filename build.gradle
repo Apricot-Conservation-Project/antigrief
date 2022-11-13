@@ -17,8 +17,8 @@ ext{
 }
 
 dependencies{
-    implementation "com.github.Anuken.Arc:arc-core:$mindustryVersion"
-    implementation "com.github.Anuken.Mindustry:core:$mindustryVersion"
+    compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
+    compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
     implementation 'mysql:mysql-connector-java:8.0.12'
 }
 
