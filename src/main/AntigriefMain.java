@@ -2,22 +2,19 @@ package main;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
+import java.math.BigDecimal;
 
 import arc.Events;
 import arc.util.Log;
 import mindustry.game.EventType;
+import mindustry.gen.Player;
 import mindustry.mod.Plugin;
 
-
-public class GrieflessMain extends Plugin {
-
-    private final float threshold = 0.99f;
+public class AntigriefMain extends Plugin {
     private final int dailyQueryLimit = 450;
 
     private final DBInterface db = new DBInterface();
@@ -31,43 +28,51 @@ public class GrieflessMain extends Plugin {
     private int hourlyQueries;
 
     private int hour = Calendar.getInstance().get(Calendar.HOUR);
+    private final HttpClient client = HttpClient.newHttpClient();
 
-    public void init(){
+    private void try_thresh(float score, Player p) {
+        if (score > 0.995) {
+            p.kick("You are using a VPN/Proxy! Please connect using your normal IP!");
+        }
+    }
 
-        db.connect("ips", "recessive", "8N~hT4=a\"M89Gk6@");
-
+    public void init() {
+        // CREATE TABLE scores ( `ip` INTEGER UNSIGNED, `score` numeric(4, 3) );
+        db.connect("ips", System.getenv("DB_USER"), System.getenv("DB_PASSWORD"));
+        if (System.getenv("DB_USER") == null) {
+            Log.err("Set the env variables DB_USER and DB_PASSWORD");
+            System.exit(1);
+        }
         prefs = Preferences.userRoot().node(this.getClass().getName());
         hourlyQueries = prefs.getInt("ipQueries", 0);
 
-        Events.run(EventType.Trigger.update, () ->{
+        Events.run(EventType.Trigger.update, () -> {
             realTime = System.currentTimeMillis() - startTime;
             seconds = (int) (realTime / 1000);
 
-            if(checkHourInterval.get(seconds)){
-                if(Calendar.getInstance().get(Calendar.HOUR) != hour){
+            if (checkHourInterval.get(seconds)) {
+                if (Calendar.getInstance().get(Calendar.HOUR) != hour) {
                     hour = Calendar.getInstance().get(Calendar.HOUR);
                     hourlyQueries = 0;
                 }
             }
         });
 
-        Events.on(EventType.PlayerConnect.class, event ->{
-            String ip = event.player.ip();
-            if(db.hasRow("scores", "ip", ip)){
-                HashMap<String, Object> entries = db.loadRow("scores", "ip", ip);
-                if((float) entries.get("score") > threshold){
-                    event.player.kick("You are using a VPN/Proxy! Please connect using your normal IP!");
-                }
+        Events.on(EventType.PlayerConnect.class, event -> {
+            String ip = "INET_ATON('" + event.player.ip() + "')";
+            HashMap<String, Object> entries = db.loadRow("scores", "ip", ip);
+            if (entries != null) {
+                try_thresh(((BigDecimal) entries.get("score")).floatValue(), event.player);
                 return;
             }
 
-            if(hourlyQueries > dailyQueryLimit/24){
+            if (hourlyQueries > dailyQueryLimit / 24) {
                 return;
             }
 
-            HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://check.getipintel.net/check.php?ip=" + ip + "&contact=aa.mindustry@gmail.com"))
+                    .uri(URI.create(
+                            "http://check.getipintel.net/check.php?ip=" + event.player.ip() + "&contact=aa.mindustry@gmail.com"))
                     .GET() // GET is default
                     .build();
 
@@ -82,19 +87,14 @@ public class GrieflessMain extends Plugin {
 
             assert response != null;
             float score = Float.parseFloat(response.body());
-            if(score < 0 || score > 1){
+            if (score < 0 || score > 1) {
                 Log.err("getipintel RETURNED ERROR: " + score);
                 return;
             }
-
-            db.addEmptyRow("scores", "ip", ip);
-
-            db.saveRow("scores", "ip", ip, "score", score);
-
-            if(score > threshold){
-                event.player.kick("You are using a VPN/Proxy! Please connect using your normal IP!");
-            }
+            String[] keys = { "ip", "score" };
+            Object[] vals = { ip, score };
+            db.addEmptyRow("scores", keys, vals);
+            try_thresh(score, event.player);
         });
-
     }
 }

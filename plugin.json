@@ -1,7 +1,7 @@
 {
-  "name": "GriefLess",
+  "name": "antigrief",
   "author": "Recessive",
-  "main": "main.GrieflessMain",
-  "description": "A plugin for helping combat griefers",
+  "main": "main.AntigriefMain",
+  "description": "A plugin for helping combat ban evaders",
   "version": 0.1
 }
