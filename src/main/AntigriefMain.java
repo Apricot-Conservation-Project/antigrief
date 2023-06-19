@@ -32,7 +32,8 @@ public class AntigriefMain extends Plugin {
 
     private void try_thresh(float score, Player p) {
         if (score > 0.995) {
-            p.kick("You are using a VPN/Proxy! Please connect using your normal IP!");
+            Log.info("kicking @ (@ / @); intel: @", p.plainName(), p.ip(), p.uuid(), score);
+            p.kick("[accent]You are using a VPN/Proxy! Please connect using your normal IP! If you think this is a mistake, ask for a whitelist at [white]apricotalliance.org[].");
         }
     }
 
