@@ -8,12 +8,13 @@ sourceSets.main.java.srcDirs = ["src"]
 
 repositories{
     mavenCentral()
+    maven{ url "https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
     maven{ url 'https://www.jitpack.io' }
 }
 
 ext{
     //the build number that this plugin is made for
-    mindustryVersion = 'v144.3'
+    mindustryVersion = 'v146'
 }
 
 dependencies{

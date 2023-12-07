@@ -10,9 +10,10 @@ import java.math.BigDecimal;
 
 import arc.Events;
 import arc.util.Log;
+import arc.util.Strings;
 import mindustry.game.EventType;
-import mindustry.gen.Player;
 import mindustry.mod.Plugin;
+import mindustry.net.NetConnection;
 
 public class AntigriefMain extends Plugin {
     private final int dailyQueryLimit = 450;
@@ -30,10 +31,11 @@ public class AntigriefMain extends Plugin {
     private int hour = Calendar.getInstance().get(Calendar.HOUR);
     private final HttpClient client = HttpClient.newHttpClient();
 
-    private void try_thresh(float score, Player p) {
+    private void try_thresh(float score, String name, String uuid, NetConnection con) {
         if (score > 0.995) {
-            Log.info("kicking @ (@ / @); intel: @", p.plainName(), p.ip(), p.uuid(), score);
-            p.kick("[accent]You are using a VPN/Proxy! Please connect using your normal IP! If you think this is a mistake, ask for a whitelist at [white]apricotalliance.org[].");
+            Log.info("kicking @ (@ / @); intel: @", Strings.stripColors(name), con.address, uuid, score);
+            con.kick(
+                    "[accent]You are using a VPN/Proxy! Please connect using your normal IP! If you think this is a mistake, ask for a whitelist at [white]apricotalliance.org[].");
         }
     }
 
@@ -59,11 +61,15 @@ public class AntigriefMain extends Plugin {
             }
         });
 
-        Events.on(EventType.PlayerConnect.class, event -> {
-            String ip = "INET_ATON('" + event.player.ip() + "')";
-            HashMap<String, Object> entries = db.loadRow("scores", "ip", ip);
+        Events.on(EventType.ConnectPacketEvent.class, event -> {
+            String ip = event.connection.address;
+            String name = event.packet.name;
+            String uuid = event.packet.uuid;
+
+            String dbIp = "INET_ATON('" + ip + "')";
+            HashMap<String, Object> entries = db.loadRow("scores", "ip", dbIp);
             if (entries != null) {
-                try_thresh(((BigDecimal) entries.get("score")).floatValue(), event.player);
+                try_thresh(((BigDecimal) entries.get("score")).floatValue(), name, uuid, event.connection);
                 return;
             }
 
@@ -73,7 +79,8 @@ public class AntigriefMain extends Plugin {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(
-                            "http://check.getipintel.net/check.php?ip=" + event.player.ip() + "&contact=aa.mindustry@gmail.com"))
+                            "http://check.getipintel.net/check.php?ip=" + ip
+                                    + "&contact=aa.mindustry@gmail.com"))
                     .GET() // GET is default
                     .build();
 
@@ -93,9 +100,9 @@ public class AntigriefMain extends Plugin {
                 return;
             }
             String[] keys = { "ip", "score" };
-            Object[] vals = { ip, score };
+            Object[] vals = { dbIp, score };
             db.addEmptyRow("scores", keys, vals);
-            try_thresh(score, event.player);
+            try_thresh(score, name, uuid, event.connection);
         });
     }
 }
